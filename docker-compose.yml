@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+    web:
+        image: nginx:latest
+        container_name: laravel_events_management_nginx
+        ports:
+            - "9987:80"
+        volumes:
+            - .:/var/www/html
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - rhr_network
+        depends_on:
+            - php
+            - redis
+
+    php:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: laravel_events_management_php
+        volumes:
+            - .:/var/www/html
+            - ~/.composer/cache:/root/.composer/cache # Composer cache untuk percepatan
+        working_dir: /var/www/html
+        networks:
+            - rhr_network
+        depends_on:
+            - redis
+        environment:
+            - PHP_IDE_CONFIG=serverName=Docker
+
+    redis:
+        image: redis:latest
+        container_name: laravel_events_management_redis
+        ports:
+            - "6388:6379"
+        networks:
+            - rhr_network
+        volumes:
+            - redis_data_v2:/data
+
+networks:
+    rhr_network:
+        external: true
+
+volumes:
+    redis_data_v2:
+        driver: local
