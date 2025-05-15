@@ -16,12 +16,30 @@ class EventController extends Controller
      */
     public function index()
     {
-        $event = EventResource::collection(Event::with('user')->get());
+
+        $query = Event::query();
+        $relations = ['user', 'attendees', 'attendees.user'];
+
+        foreach ($relations as $relation) {
+            if ($this->shouldIncludeRelation($relation)) {
+                $query->with($relation);
+            }
+        }
+
+        $paginator = $query->latest()->paginate(5);
+        $event = EventResource::collection($paginator);
 
         try {
             return response()->json([
                 'message' => 'Events retrieved successfully',
-                'data' => $event
+                'data' => $event,
+                'meta' => [
+                    'total' => $paginator->total(),
+                    'count' => $paginator->count(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                ]
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -49,7 +67,7 @@ class EventController extends Controller
 
             return response()->json([
                 'message' => 'Event created successfully',
-                'event' => $event
+                'data' => $event
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -67,7 +85,7 @@ class EventController extends Controller
         try {
             return response()->json([
                 'message' => 'Event retrieved successfully',
-                'event' => new EventResource($event)
+                'data' => new EventResource($event)
             ], 200);
         } catch (Exception $e) {
             return response()->json([
@@ -95,7 +113,7 @@ class EventController extends Controller
 
             return response()->json([
                 'message' => 'Event updated successfully',
-                'event' => $event
+                'data' => $event
             ], 200);
         } catch (ValidationException $e) {
             return response()->json([
@@ -122,5 +140,18 @@ class EventController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function shouldIncludeRelation(string $relation)
+    {
+        $include = request()->query('include');
+
+        if (!$include) {
+            return false;
+        }
+
+        $relations = array_map('trim', explode(',', $include));
+
+        return in_array($relation, $relations);
     }
 }

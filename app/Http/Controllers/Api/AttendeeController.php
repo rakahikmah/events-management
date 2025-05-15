@@ -17,9 +17,20 @@ class AttendeeController extends Controller
     public function index(Event $event)
     {
         try {
-            return AttendeeResource::collection(
-                $event->attendees()->latest()->paginate(5)
-            );
+            $paginator = $event->attendees()->latest()->paginate(1);
+            $attendees = AttendeeResource::collection($paginator);
+
+            return response()->json([
+                'message' => 'Attendees retrieved successfully',
+                'date' => $attendees,
+                'meta' => [
+                    'total' => $paginator->total(),
+                    'count' => $paginator->count(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                ]
+            ]);
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to retrieve attendees',
