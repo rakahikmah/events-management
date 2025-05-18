@@ -8,15 +8,22 @@ use App\Models\Event;
 use App\Http\Resources\AttendeeResource;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Traits\CanLoadRelationships;
 
 class AttendeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+    use CanLoadRelationships;
+
+    private array $relationships = ['user'];
     public function index(Event $event)
     {
         try {
+            $event = $this->loadRelationships($event);
+
             $paginator = $event->attendees()->latest()->paginate(1);
             $attendees = AttendeeResource::collection($paginator);
 

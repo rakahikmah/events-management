@@ -8,9 +8,15 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
 use Illuminate\Validation\ValidationException;
+use App\Http\Traits\CanLoadRelationships;
 
 class EventController extends Controller
 {
+    use CanLoadRelationships;
+
+
+    private array $relations = ['user','attendeces','attendees.user'];
+
     /**
      * Display a listing of the resource.
      */
@@ -20,11 +26,8 @@ class EventController extends Controller
         $query = Event::query();
         $relations = ['user', 'attendees', 'attendees.user'];
 
-        foreach ($relations as $relation) {
-            if ($this->shouldIncludeRelation($relation)) {
-                $query->with($relation);
-            }
-        }
+        // gunakan traits
+        $query = $this->loadRelationships($query, $relations);
 
         $paginator = $query->latest()->paginate(5);
         $event = EventResource::collection($paginator);
@@ -83,6 +86,9 @@ class EventController extends Controller
     public function show(Event $event)
     {
         try {
+
+            $event = $this->loadRelationships($event);
+
             return response()->json([
                 'message' => 'Event retrieved successfully',
                 'data' => new EventResource($event)
