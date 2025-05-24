@@ -65,7 +65,7 @@ class EventController extends Controller
                     'start_date' => 'required|date',
                     'end_date' => 'required|date|after:start_time',
                 ]),
-                'user_id' => 1
+                'user_id' => $request->user()->id
             ]);
 
             return response()->json([
