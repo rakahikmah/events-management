@@ -6,16 +6,18 @@ use Exception;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Resources\EventResource;
-use Illuminate\Validation\ValidationException;
 use App\Http\Traits\CanLoadRelationships;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class EventController extends Controller
 {
     use CanLoadRelationships;
 
 
-    private array $relations = ['user','attendeces','attendees.user'];
+    private array $relations = ['user', 'attendeces', 'attendees.user'];
 
     /**
      * Display a listing of the resource.
@@ -86,13 +88,17 @@ class EventController extends Controller
     public function show(Event $event)
     {
         try {
-
+            Gate::authorize('view', $event);
             $event = $this->loadRelationships($event);
 
             return response()->json([
                 'message' => 'Event retrieved successfully',
                 'data' => new EventResource($event)
             ], 200);
+        } catch (AuthorizationException $e) {
+            return response()->json([
+                'message' => 'You are not authorized to view this event'
+            ], 403);
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to retrieve event',

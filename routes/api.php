@@ -14,7 +14,7 @@ Route::get('/user', function (Request $request) {
 Route::post('/login', [AuthController::class, 'login']);
 
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum','throttle:api'])->group(function () {
     Route::apiResource('events', EventController::class);
     Route::apiResource('events.attendees', AttendeeController::class)
         ->scoped()->except(['update']);

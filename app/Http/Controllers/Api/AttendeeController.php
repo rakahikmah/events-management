@@ -19,6 +19,8 @@ class AttendeeController extends Controller
     use CanLoadRelationships;
 
     private array $relationships = ['user'];
+
+    
     public function index(Event $event)
     {
         try {
